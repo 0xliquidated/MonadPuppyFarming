@@ -1,11 +1,14 @@
 :root {
-  --primary-color: #6c5ce7;
-  --secondary-color: #a8a4e6;
-  --background-color: #f8f9fa;
-  --card-background: #ffffff;
-  --text-color: #2d3436;
+  --primary-color: #6c5ce7; /* Monad Purple */
+  --secondary-color: #8f87e8;
+  --background-color: #0a0a0a;
+  --card-background: linear-gradient(145deg, #151515, #1a1a1a);
+  --card-hover-background: linear-gradient(145deg, #1a1a1a, #202020);
+  --text-color: #e1e1e1;
+  --text-secondary: #a0a0a0;
   --border-radius: 12px;
-  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  --card-border: 1px solid rgba(108, 92, 231, 0.1);
 }
 
 * {
@@ -18,6 +21,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
+  min-height: 100vh;
 }
 
 .app {
@@ -31,27 +35,33 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  padding: 1rem;
+  background: linear-gradient(145deg, #151515, #1a1a1a);
+  border-radius: var(--border-radius);
+  border: var(--card-border);
 }
 
 h1 {
   font-size: 2.5rem;
   color: var(--primary-color);
+  text-shadow: 0 0 20px rgba(108, 92, 231, 0.3);
 }
 
 button {
-  background-color: var(--primary-color);
+  background: linear-gradient(145deg, var(--primary-color), #5a4bd4);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius);
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.2s, background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background-color: var(--secondary-color);
+  background: linear-gradient(145deg, #5a4bd4, var(--primary-color));
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
 }
 
 .stats {
@@ -62,10 +72,17 @@ button:hover {
 }
 
 .stat-box {
-  background-color: var(--card-background);
+  background: var(--card-background);
   padding: 1.5rem;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: var(--card-border);
+  transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+  background: var(--card-hover-background);
+  transform: translateY(-2px);
 }
 
 .stat-box h3 {
@@ -81,10 +98,19 @@ button:hover {
 
 .stake-input input {
   flex: 1;
-  padding: 0.5rem;
-  border: 2px solid var(--secondary-color);
+  padding: 0.75rem;
+  border: 1px solid rgba(108, 92, 231, 0.2);
   border-radius: var(--border-radius);
   font-size: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.stake-input input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.2);
 }
 
 .actions {
@@ -94,6 +120,10 @@ button:hover {
 .mint-button {
   font-size: 1.1rem;
   padding: 1rem 2rem;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
 }
 
 .puppies {
@@ -103,44 +133,54 @@ button:hover {
 }
 
 .puppy-card {
-  background-color: var(--card-background);
+  background: var(--card-background);
   padding: 1.5rem;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   text-align: center;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  border: var(--card-border);
 }
 
 .puppy-card:hover {
   transform: translateY(-5px);
+  background: var(--card-hover-background);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .puppy-emoji {
   font-size: 4rem;
   margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(108, 92, 231, 0.4);
 }
 
 .feed-button {
   margin-top: 1rem;
   width: 100%;
-  background-color: var(--secondary-color);
+  background: linear-gradient(145deg, var(--secondary-color), var(--primary-color));
+}
+
+.feed-button:hover {
+  background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
 }
 
 .cooldown {
   font-size: 0.9rem;
-  color: var(--secondary-color);
+  color: var(--text-secondary);
   margin: 0.5rem 0;
 }
 
 button:disabled {
-  background-color: #ccc;
+  background: #2a2a2a;
   cursor: not-allowed;
   transform: none;
+  color: var(--text-secondary);
 }
 
 button:disabled:hover {
-  background-color: #ccc;
+  background: #2a2a2a;
   transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 768px) {
