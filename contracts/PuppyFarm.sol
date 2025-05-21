@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 contract PuppyFarm {
+    address public owner;
+    
     struct Puppy {
         uint256 level;
         uint256 lastFed;
@@ -23,6 +25,16 @@ contract PuppyFarm {
     event Staked(address owner, uint256 amount);
     event Unstaked(address owner, uint256 amount);
     event BonesClaimed(address owner, uint256 amount);
+    event EmergencyWithdraw(uint256 amount);
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
     
     function mintPuppy() external payable {
         require(msg.value == MINT_COST, "Must send 1 MONAD");
@@ -53,13 +65,20 @@ contract PuppyFarm {
         payable(msg.sender).transfer(amount);
         emit Unstaked(msg.sender, amount);
     }
+
+    function getPendingBones(address user) public view returns (uint256) {
+        if (stakedAmount[user] == 0) return 0;
+        uint256 timePassed = block.timestamp - lastBonesClaim[user];
+        return (stakedAmount[user] * STAKE_MULTIPLIER * timePassed) / (10 ether * 1 days);
+    }
     
     function claimBones() public {
-        uint256 timePassed = block.timestamp - lastBonesClaim[msg.sender];
-        uint256 bonesEarned = (stakedAmount[msg.sender] * STAKE_MULTIPLIER * timePassed) / (10 ether * 1 days);
-        bonesBalance[msg.sender] += bonesEarned;
-        lastBonesClaim[msg.sender] = block.timestamp;
-        emit BonesClaimed(msg.sender, bonesEarned);
+        uint256 pendingBones = getPendingBones(msg.sender);
+        if (pendingBones > 0) {
+            bonesBalance[msg.sender] += pendingBones;
+            lastBonesClaim[msg.sender] = block.timestamp;
+            emit BonesClaimed(msg.sender, pendingBones);
+        }
     }
     
     function feedPuppy(uint256 puppyId) external {
@@ -76,5 +95,12 @@ contract PuppyFarm {
     
     function getPuppies(address owner) external view returns (Puppy[] memory) {
         return puppies[owner];
+    }
+
+    function emergencyWithdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No balance to withdraw");
+        payable(owner).transfer(balance);
+        emit EmergencyWithdraw(balance);
     }
 } 

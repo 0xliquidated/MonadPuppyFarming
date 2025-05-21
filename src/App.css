@@ -183,6 +183,31 @@ button:disabled:hover {
   box-shadow: none;
 }
 
+.pending-bones {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(108, 92, 231, 0.1);
+  border-radius: var(--border-radius);
+}
+
+.emergency-button {
+  margin-top: 1rem;
+  background: linear-gradient(145deg, #ff4757, #ff6b81);
+  font-size: 0.9rem;
+}
+
+.emergency-button:hover {
+  background: linear-gradient(145deg, #ff6b81, #ff4757);
+}
+
+.stake-input + .stake-input {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(108, 92, 231, 0.1);
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 1rem;

@@ -16,7 +16,10 @@ function App() {
   const [puppies, setPuppies] = useState<Puppy[]>([]);
   const [stakedAmount, setStakedAmount] = useState<string>('0');
   const [bonesBalance, setBonesBalance] = useState<string>('0');
+  const [pendingBones, setPendingBones] = useState<string>('0');
   const [stakeAmount, setStakeAmount] = useState<string>('');
+  const [unstakeAmount, setUnstakeAmount] = useState<string>('');
+  const [isOwner, setIsOwner] = useState<boolean>(false);
 
   useEffect(() => {
     const init = async () => {
@@ -31,6 +34,10 @@ function App() {
           const contract = new ethers.Contract(PUPPY_FARM_ADDRESS, PUPPY_FARM_ABI, provider);
           setContract(contract);
           
+          // Check if user is owner
+          const contractOwner = await contract.owner();
+          setIsOwner(accounts[0].toLowerCase() === contractOwner.toLowerCase());
+          
           // Load initial data
           await loadUserData(accounts[0], contract);
         } catch (err) {
@@ -42,17 +49,38 @@ function App() {
     init();
   }, []);
 
+  // Update pending bones every 5 seconds
+  useEffect(() => {
+    if (!contract || !account) return;
+
+    const updatePendingBones = async () => {
+      try {
+        const pending = await contract.getPendingBones(account);
+        setPendingBones(pending.toString());
+      } catch (error) {
+        console.error("Error updating pending bones:", error);
+      }
+    };
+
+    const interval = setInterval(updatePendingBones, 5000);
+    updatePendingBones(); // Initial update
+
+    return () => clearInterval(interval);
+  }, [contract, account]);
+
   const loadUserData = async (userAddress: string, contract: ethers.Contract) => {
     try {
-      const [puppies, stakedAmount, bonesBalance] = await Promise.all([
+      const [puppies, stakedAmount, bonesBalance, pendingBones] = await Promise.all([
         contract.getPuppies(userAddress),
         contract.stakedAmount(userAddress),
-        contract.bonesBalance(userAddress)
+        contract.bonesBalance(userAddress),
+        contract.getPendingBones(userAddress)
       ]);
 
       setPuppies(puppies);
       setStakedAmount(stakedAmount.toString());
       setBonesBalance(bonesBalance.toString());
+      setPendingBones(pendingBones.toString());
     } catch (error) {
       console.error("Error loading user data:", error);
     }
@@ -70,7 +98,6 @@ function App() {
       });
       await tx.wait();
       
-      // Reload user data
       await loadUserData(account, contract);
     } catch (error) {
       console.error("Error minting puppy:", error);
@@ -89,11 +116,41 @@ function App() {
       });
       await tx.wait();
       
-      // Reset input and reload data
       setStakeAmount('');
       await loadUserData(account, contract);
     } catch (error) {
       console.error("Error staking:", error);
+    }
+  };
+
+  const unstake = async () => {
+    if (!provider || !account || !unstakeAmount || !contract) return;
+    
+    try {
+      const signer = await provider.getSigner();
+      const contractWithSigner = contract.connect(signer);
+      
+      const tx = await contractWithSigner.unstake(ethers.parseEther(unstakeAmount));
+      await tx.wait();
+      
+      setUnstakeAmount('');
+      await loadUserData(account, contract);
+    } catch (error) {
+      console.error("Error unstaking:", error);
+    }
+  };
+
+  const emergencyWithdraw = async () => {
+    if (!provider || !account || !contract || !isOwner) return;
+    
+    try {
+      const signer = await provider.getSigner();
+      const contractWithSigner = contract.connect(signer);
+      
+      const tx = await contractWithSigner.emergencyWithdraw();
+      await tx.wait();
+    } catch (error) {
+      console.error("Error emergency withdrawing:", error);
     }
   };
 
@@ -107,7 +164,6 @@ function App() {
       const tx = await contractWithSigner.feedPuppy(puppyId);
       await tx.wait();
       
-      // Reload user data
       await loadUserData(account, contract);
     } catch (error) {
       console.error("Error feeding puppy:", error);
@@ -151,11 +207,23 @@ function App() {
             />
             <button onClick={stake}>Stake</button>
           </div>
+          <div className="stake-input">
+            <input
+              type="number"
+              placeholder="Amount to unstake"
+              value={unstakeAmount}
+              onChange={(e) => setUnstakeAmount(e.target.value)}
+              min="0"
+              step="0.1"
+            />
+            <button onClick={unstake}>Unstake</button>
+          </div>
         </div>
 
         <div className="stat-box">
           <h3>$BONES Balance</h3>
           <p>{bonesBalance} BONES</p>
+          <p className="pending-bones">Pending: {pendingBones} BONES</p>
           <button onClick={() => contract?.claimBones()}>Claim Bones</button>
         </div>
       </div>
@@ -164,6 +232,11 @@ function App() {
         <button onClick={mintPuppy} className="mint-button">
           Mint Puppy (1 MONAD)
         </button>
+        {isOwner && (
+          <button onClick={emergencyWithdraw} className="emergency-button">
+            Emergency Withdraw
+          </button>
+        )}
       </div>
 
       <div className="puppies">
