@@ -1,61 +1,48 @@
-# Monad Puppy Farm 🐕
+# 🐕 Monad Puppy Farm
 
-A fun DApp built on Monad Testnet where users can mint and level up virtual puppies using $BONES tokens earned from staking MONAD.
+A DeFi game built on the Monad testnet where users can stake MONAD tokens to earn $BONES, mint and level up virtual puppies.
 
 ## Features
 
-- Mint puppies for 1 MONAD each (one per day)
-- Stake MONAD to earn $BONES tokens
+- Stake MONAD tokens to earn $BONES
+- Mint puppies for 1 MONAD each
 - Feed puppies with $BONES to level them up
-- Modern, responsive UI with real-time updates
-- Cooldown system for minting and feeding
+- Each puppy level increases your $BONES earning rate
+- Dynamic feed costs that increase with each level
+- Modern React frontend with dark mode UI
 
-## Contract Address
+## Contract Details
 
-The smart contract is deployed on Monad Testnet at: `0x3c41DEe0b8bAdD4BFE7c19819B940589b522dEF7`
+Latest deployment: `0xD56ddc88E1D8718371C089B77F32499604193E28`
 
-## Prerequisites
+### Tokenomics
 
-- Node.js and npm installed
-- MetaMask wallet with Monad Testnet configured
-- Some MONAD testnet tokens
+- Base rate: 100,000 $BONES per 10 MONAD staked per day
+- Each puppy level adds a 1x multiplier to earnings
+- Feed costs increase by 1.5x after each level up
+- Initial feed cost: 20,000 $BONES
 
-## Setup
+## Development
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/0xliquidated/MonadPuppyFarming.git
-cd MonadPuppyFarming
-```
-
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-3. Start the development server:
-```bash
+# Run development server
 npm run dev
+
+# Build for production
+npm run build
 ```
 
-4. Open http://localhost:5173 in your browser
+## Technologies Used
 
-## Usage
-
-1. Connect your MetaMask wallet
-2. Make sure you're on Monad Testnet
-3. Use the interface to:
-   - Mint new puppies
-   - Stake MONAD
-   - Claim $BONES
-   - Feed and level up your puppies
-
-## Technology Stack
-
-- React + TypeScript
+- Solidity
+- React
+- TypeScript
 - Vite
 - ethers.js
-- Solidity (Smart Contract)
+- Monad testnet
 
 ## License
 

@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { ethers, Contract } from 'ethers';
 import './App.css';
 import { PUPPY_FARM_ADDRESS, PUPPY_FARM_ABI } from './contracts/PuppyFarm';
-import type { PuppyFarmContract } from './types/contracts';
+import type { PuppyFarmContract, PuppyStruct } from './types/contracts';
 
 interface Puppy {
   level: number;
-  lastFed: number;
+  feedCost: number;
   mintTime: number;
 }
 
@@ -21,6 +21,7 @@ function App() {
   const [stakeAmount, setStakeAmount] = useState<string>('');
   const [unstakeAmount, setUnstakeAmount] = useState<string>('');
   const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [multiplier, setMultiplier] = useState<string>('100');
 
   useEffect(() => {
     const init = async () => {
@@ -55,42 +56,48 @@ function App() {
     init();
   }, []);
 
-  // Update pending bones every 5 seconds
+  // Update pending bones and multiplier every 5 seconds
   useEffect(() => {
     if (!contract || !account) return;
 
-    const updatePendingBones = async () => {
+    const updateData = async () => {
       try {
-        const pending = await contract.getPendingBones(account);
+        const [pending, multiplier] = await Promise.all([
+          contract.getPendingBones(account),
+          contract.calculatePuppyMultiplier(account)
+        ]);
         setPendingBones(pending.toString());
+        setMultiplier(multiplier.toString());
       } catch (error) {
-        console.error("Error updating pending bones:", error);
+        console.error("Error updating data:", error);
       }
     };
 
-    const interval = setInterval(updatePendingBones, 5000);
-    updatePendingBones(); // Initial update
+    const interval = setInterval(updateData, 5000);
+    updateData(); // Initial update
 
     return () => clearInterval(interval);
   }, [contract, account]);
 
   const loadUserData = async (userAddress: string, contract: PuppyFarmContract) => {
     try {
-      const [puppies, stakedAmount, bonesBalance, pendingBones] = await Promise.all([
+      const [puppies, stakedAmount, bonesBalance, pendingBones, multiplier] = await Promise.all([
         contract.getPuppies(userAddress),
         contract.stakedAmount(userAddress),
         contract.bonesBalance(userAddress),
-        contract.getPendingBones(userAddress)
+        contract.getPendingBones(userAddress),
+        contract.calculatePuppyMultiplier(userAddress)
       ]);
 
       setPuppies(puppies.map(p => ({
         level: Number(p[0]),
-        lastFed: Number(p[1]),
+        feedCost: Number(p[1]),
         mintTime: Number(p[2])
       })));
       setStakedAmount(stakedAmount.toString());
       setBonesBalance(bonesBalance.toString());
       setPendingBones(pendingBones.toString());
+      setMultiplier(multiplier.toString());
     } catch (error) {
       console.error("Error loading user data:", error);
     }
@@ -222,6 +229,7 @@ function App() {
         <div className="stat-box">
           <h3>Staked MONAD</h3>
           <p>{ethers.formatEther(stakedAmount)} MONAD</p>
+          <p className="multiplier">Earning Multiplier: {(Number(multiplier) / 100).toFixed(2)}x</p>
           <div className="stake-input">
             <input
               type="number"
@@ -272,15 +280,14 @@ function App() {
           <div key={index} className="puppy-card">
             <div className="puppy-emoji">🐕</div>
             <p>Level {puppy.level}</p>
-            <p className="cooldown">
-              Next Feed: {formatTimeLeft(Number(puppy.lastFed) + 24 * 60 * 60)}
-            </p>
+            <p>Feed Cost: {puppy.feedCost} BONES</p>
+            <p className="multiplier">Adds {(puppy.level - 1)}x to Multiplier</p>
             <button 
               onClick={() => feedPuppy(index)}
               className="feed-button"
-              disabled={Date.now() / 1000 < Number(puppy.lastFed) + 24 * 60 * 60}
+              disabled={Number(bonesBalance) < puppy.feedCost}
             >
-              Feed (20,000 BONES)
+              Feed ({puppy.feedCost} BONES)
             </button>
           </div>
         ))}

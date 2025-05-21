@@ -6,7 +6,7 @@ contract PuppyFarm {
     
     struct Puppy {
         uint256 level;
-        uint256 lastFed;
+        uint256 feedCost;
         uint256 mintTime;
     }
     
@@ -15,13 +15,14 @@ contract PuppyFarm {
     mapping(address => uint256) public lastBonesClaim;
     mapping(address => uint256) public bonesBalance;
     
-    uint256 constant STAKE_MULTIPLIER = 100000; // Bones per 10 MONAD per day
-    uint256 constant FEED_COST = 20000; // Bones needed to feed a puppy
+    uint256 constant BASE_STAKE_MULTIPLIER = 100000; // Base bones per 10 MONAD per day
+    uint256 constant INITIAL_FEED_COST = 20000; // Initial bones needed to feed a puppy
     uint256 constant MINT_COST = 1 ether; // 1 MONAD
-    uint256 constant MINT_COOLDOWN = 1 days;
+    uint256 constant FEED_COST_INCREASE = 150; // 1.5x increase per feed (in basis points)
+    uint256 constant BASIS_POINTS = 100;
     
     event PuppyMinted(address owner, uint256 puppyId);
-    event PuppyFed(address owner, uint256 puppyId, uint256 newLevel);
+    event PuppyFed(address owner, uint256 puppyId, uint256 newLevel, uint256 newFeedCost);
     event Staked(address owner, uint256 amount);
     event Unstaked(address owner, uint256 amount);
     event BonesClaimed(address owner, uint256 amount);
@@ -38,13 +39,10 @@ contract PuppyFarm {
     
     function mintPuppy() external payable {
         require(msg.value == MINT_COST, "Must send 1 MONAD");
-        require(puppies[msg.sender].length == 0 || 
-                block.timestamp >= puppies[msg.sender][puppies[msg.sender].length - 1].mintTime + MINT_COOLDOWN,
-                "Can only mint one puppy per day");
                 
         puppies[msg.sender].push(Puppy({
             level: 1,
-            lastFed: block.timestamp,
+            feedCost: INITIAL_FEED_COST,
             mintTime: block.timestamp
         }));
         
@@ -66,10 +64,23 @@ contract PuppyFarm {
         emit Unstaked(msg.sender, amount);
     }
 
+    function calculatePuppyMultiplier(address user) public view returns (uint256) {
+        uint256 totalMultiplier = 100; // Start at 1x (100%)
+        Puppy[] memory userPuppies = puppies[user];
+        
+        for(uint256 i = 0; i < userPuppies.length; i++) {
+            // Each level adds 1x to the multiplier (level 1 = 1x, level 2 = 2x, etc.)
+            totalMultiplier += (userPuppies[i].level - 1) * 100;
+        }
+        
+        return totalMultiplier;
+    }
+
     function getPendingBones(address user) public view returns (uint256) {
         if (stakedAmount[user] == 0) return 0;
         uint256 timePassed = block.timestamp - lastBonesClaim[user];
-        return (stakedAmount[user] * STAKE_MULTIPLIER * timePassed) / (10 ether * 1 days);
+        uint256 multiplier = calculatePuppyMultiplier(user);
+        return (stakedAmount[user] * BASE_STAKE_MULTIPLIER * timePassed * multiplier) / (10 ether * 1 days * 100);
     }
     
     function claimBones() public {
@@ -83,14 +94,19 @@ contract PuppyFarm {
     
     function feedPuppy(uint256 puppyId) external {
         require(puppyId < puppies[msg.sender].length, "Invalid puppy ID");
-        require(bonesBalance[msg.sender] >= FEED_COST, "Not enough bones");
-        require(block.timestamp >= puppies[msg.sender][puppyId].lastFed + 1 days, "Can only feed once per day");
+        require(bonesBalance[msg.sender] >= puppies[msg.sender][puppyId].feedCost, "Not enough bones");
         
-        bonesBalance[msg.sender] -= FEED_COST;
+        uint256 currentFeedCost = puppies[msg.sender][puppyId].feedCost;
+        bonesBalance[msg.sender] -= currentFeedCost;
+        
+        // Increase level
         puppies[msg.sender][puppyId].level += 1;
-        puppies[msg.sender][puppyId].lastFed = block.timestamp;
         
-        emit PuppyFed(msg.sender, puppyId, puppies[msg.sender][puppyId].level);
+        // Calculate new feed cost (1.5x increase)
+        uint256 newFeedCost = (currentFeedCost * FEED_COST_INCREASE) / BASIS_POINTS;
+        puppies[msg.sender][puppyId].feedCost = newFeedCost;
+        
+        emit PuppyFed(msg.sender, puppyId, puppies[msg.sender][puppyId].level, newFeedCost);
     }
     
     function getPuppies(address owner) external view returns (Puppy[] memory) {
