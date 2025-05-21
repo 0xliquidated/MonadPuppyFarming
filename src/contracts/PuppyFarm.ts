@@ -1,6 +1,11 @@
-export const PUPPY_FARM_ADDRESS = "0x3c41DEe0b8bAdD4BFE7c19819B940589b522dEF7";
+export const PUPPY_FARM_ADDRESS = "0x4F792Cf3Af1914614d4a4E4Eec6282837c0ae55E";
 
 export const PUPPY_FARM_ABI = [
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
   {
     "inputs": [
       {
@@ -28,6 +33,13 @@ export const PUPPY_FARM_ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "emergencyWithdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -38,6 +50,25 @@ export const PUPPY_FARM_ABI = [
     "name": "feedPuppy",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getPendingBones",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -81,6 +112,19 @@ export const PUPPY_FARM_ABI = [
     "name": "mintPuppy",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
