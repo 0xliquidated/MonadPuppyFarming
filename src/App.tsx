@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ethers, Contract } from 'ethers';
 import './App.css';
 import { PUPPY_FARM_ADDRESS, PUPPY_FARM_ABI } from './contracts/PuppyFarm';
-import type { PuppyFarmContract, PuppyStruct } from './types/contracts';
+import type { PuppyFarmContract } from './types/contracts';
 
 interface Puppy {
   level: number;
@@ -256,42 +256,37 @@ function App() {
 
         <div className="stat-box">
           <h3>$BONES Balance</h3>
-          <p>{bonesBalance} BONES</p>
-          <p className="pending-bones">Pending: {pendingBones} BONES</p>
-          <button onClick={claimBones} disabled={Number(pendingBones) === 0}>
-            Claim Bones
-          </button>
+          <p>{ethers.formatEther(bonesBalance)} $BONES</p>
+          <p>Pending: {ethers.formatEther(pendingBones)} $BONES</p>
+          <button onClick={claimBones}>Claim $BONES</button>
         </div>
       </div>
 
-      <div className="actions">
-        <button onClick={mintPuppy} className="mint-button">
-          Mint Puppy (1 MONAD)
-        </button>
-        {isOwner && (
-          <button onClick={emergencyWithdraw} className="emergency-button">
-            Emergency Withdraw
-          </button>
-        )}
+      <div className="puppies-section">
+        <div className="mint-section">
+          <h3>Mint a New Puppy</h3>
+          <button onClick={mintPuppy}>Mint Puppy (1 MONAD)</button>
+        </div>
+
+        <div className="puppies-grid">
+          {puppies.map((puppy, index) => (
+            <div key={index} className="puppy-card">
+              <h4>Puppy #{index + 1}</h4>
+              <p>Level: {puppy.level}</p>
+              <p>Feed Cost: {puppy.feedCost} $BONES</p>
+              <p>Next Feed: {formatTimeLeft(puppy.mintTime)}</p>
+              <button onClick={() => feedPuppy(index)}>Feed Puppy</button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="puppies">
-        {puppies.map((puppy, index) => (
-          <div key={index} className="puppy-card">
-            <div className="puppy-emoji">🐕</div>
-            <p>Level {puppy.level}</p>
-            <p>Feed Cost: {puppy.feedCost} BONES</p>
-            <p className="multiplier">Adds {(puppy.level - 1)}x to Multiplier</p>
-            <button 
-              onClick={() => feedPuppy(index)}
-              className="feed-button"
-              disabled={Number(bonesBalance) < puppy.feedCost}
-            >
-              Feed ({puppy.feedCost} BONES)
-            </button>
-          </div>
-        ))}
-      </div>
+      {isOwner && (
+        <div className="admin-section">
+          <h3>Admin Controls</h3>
+          <button onClick={emergencyWithdraw}>Emergency Withdraw</button>
+        </div>
+      )}
     </div>
   );
 }
