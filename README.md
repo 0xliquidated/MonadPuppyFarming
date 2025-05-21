@@ -24,8 +24,8 @@ The smart contract is deployed on Monad Testnet at: `0x3c41DEe0b8bAdD4BFE7c19819
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd monad-puppy-farm
+git clone https://github.com/0xliquidated/MonadPuppyFarming.git
+cd MonadPuppyFarming
 ```
 
 2. Install dependencies:
