@@ -180,6 +180,22 @@ function App() {
     }
   };
 
+  const claimBones = async () => {
+    if (!provider || !account || !contract) return;
+    
+    try {
+      const signer = await provider.getSigner();
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
+      
+      const tx = await contractWithSigner.claimBones();
+      await tx.wait();
+      
+      await loadUserData(account, contract);
+    } catch (error) {
+      console.error("Error claiming bones:", error);
+    }
+  };
+
   const formatTimeLeft = (timestamp: number) => {
     const now = Math.floor(Date.now() / 1000);
     const diff = timestamp - now;
@@ -234,7 +250,9 @@ function App() {
           <h3>$BONES Balance</h3>
           <p>{bonesBalance} BONES</p>
           <p className="pending-bones">Pending: {pendingBones} BONES</p>
-          <button onClick={() => contract?.claimBones()}>Claim Bones</button>
+          <button onClick={claimBones} disabled={Number(pendingBones) === 0}>
+            Claim Bones
+          </button>
         </div>
       </div>
 
