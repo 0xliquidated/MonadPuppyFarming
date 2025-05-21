@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import { ethers, Contract } from 'ethers';
 import './App.css';
 import { PUPPY_FARM_ADDRESS, PUPPY_FARM_ABI } from './contracts/PuppyFarm';
+import type { PuppyFarmContract } from './types/contracts';
 
 interface Puppy {
   level: number;
@@ -12,7 +13,7 @@ interface Puppy {
 function App() {
   const [account, setAccount] = useState<string>('');
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [contract, setContract] = useState<PuppyFarmContract | null>(null);
   const [puppies, setPuppies] = useState<Puppy[]>([]);
   const [stakedAmount, setStakedAmount] = useState<string>('0');
   const [bonesBalance, setBonesBalance] = useState<string>('0');
@@ -31,7 +32,12 @@ function App() {
           const accounts = await provider.send("eth_requestAccounts", []);
           setAccount(accounts[0]);
           
-          const contract = new ethers.Contract(PUPPY_FARM_ADDRESS, PUPPY_FARM_ABI, provider);
+          const contract = new Contract(
+            PUPPY_FARM_ADDRESS, 
+            PUPPY_FARM_ABI, 
+            provider
+          ) as unknown as PuppyFarmContract;
+          
           setContract(contract);
           
           // Check if user is owner
@@ -68,7 +74,7 @@ function App() {
     return () => clearInterval(interval);
   }, [contract, account]);
 
-  const loadUserData = async (userAddress: string, contract: ethers.Contract) => {
+  const loadUserData = async (userAddress: string, contract: PuppyFarmContract) => {
     try {
       const [puppies, stakedAmount, bonesBalance, pendingBones] = await Promise.all([
         contract.getPuppies(userAddress),
@@ -77,7 +83,11 @@ function App() {
         contract.getPendingBones(userAddress)
       ]);
 
-      setPuppies(puppies);
+      setPuppies(puppies.map(p => ({
+        level: Number(p[0]),
+        lastFed: Number(p[1]),
+        mintTime: Number(p[2])
+      })));
       setStakedAmount(stakedAmount.toString());
       setBonesBalance(bonesBalance.toString());
       setPendingBones(pendingBones.toString());
@@ -91,7 +101,7 @@ function App() {
     
     try {
       const signer = await provider.getSigner();
-      const contractWithSigner = contract.connect(signer);
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
       
       const tx = await contractWithSigner.mintPuppy({
         value: ethers.parseEther("1")
@@ -109,7 +119,7 @@ function App() {
     
     try {
       const signer = await provider.getSigner();
-      const contractWithSigner = contract.connect(signer);
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
       
       const tx = await contractWithSigner.stake({
         value: ethers.parseEther(stakeAmount)
@@ -128,7 +138,7 @@ function App() {
     
     try {
       const signer = await provider.getSigner();
-      const contractWithSigner = contract.connect(signer);
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
       
       const tx = await contractWithSigner.unstake(ethers.parseEther(unstakeAmount));
       await tx.wait();
@@ -145,7 +155,7 @@ function App() {
     
     try {
       const signer = await provider.getSigner();
-      const contractWithSigner = contract.connect(signer);
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
       
       const tx = await contractWithSigner.emergencyWithdraw();
       await tx.wait();
@@ -159,7 +169,7 @@ function App() {
     
     try {
       const signer = await provider.getSigner();
-      const contractWithSigner = contract.connect(signer);
+      const contractWithSigner = contract.connect(signer) as PuppyFarmContract;
       
       const tx = await contractWithSigner.feedPuppy(puppyId);
       await tx.wait();
